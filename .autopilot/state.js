@@ -1,7 +1,7 @@
 window.STATE =
 {
   "slug": "picloms-scroll-archive",
-  "dir": "2026-09-10-picloms-scroll-archive--wip",
+  "dir": "2026-09-10-picloms-scroll-archive",
   "title": "Scroll-driven витрина picloms",
   "mode": "semi",
   "depth": "normal",
@@ -11,19 +11,19 @@ window.STATE =
   "memoryFile": "AGENTS.md",
   "skillDir": "C:\\Users\\SeniorPomidor\\.agents\\skills\\autopilot",
   "startedAt": "2026-09-10T00:15:10+03:00",
-  "updatedAt": "2026-09-10T00:49:31+03:00",
-  "finishedAt": null,
+  "updatedAt": "2026-09-10T07:34:47+03:00",
+  "finishedAt": "2026-09-10T07:34:47+03:00",
   "stages": [
     { "id": "preflight", "status": "done", "startedAt": "2026-09-10T00:15:10+03:00", "finishedAt": "2026-09-10T00:17:10+03:00" },
     { "id": "manifest", "status": "done", "startedAt": "2026-09-10T00:17:10+03:00", "finishedAt": "2026-09-10T00:18:40+03:00" },
     { "id": "briefing", "status": "skipped", "note": "вопросов не потребовалось" },
     { "id": "spec", "status": "done", "startedAt": "2026-09-10T00:18:40+03:00", "finishedAt": "2026-09-10T00:20:00+03:00" },
     { "id": "plan", "status": "done", "startedAt": "2026-09-10T00:20:00+03:00", "finishedAt": "2026-09-10T00:20:52+03:00", "note": "1 таск, ярус T1" },
-    { "id": "build", "status": "active", "startedAt": "2026-09-10T00:24:17+03:00", "note": "0 из 1 тасков готовы" },
-    { "id": "review", "status": "pending" },
-    { "id": "final", "status": "pending" }
+    { "id": "build", "status": "done", "startedAt": "2026-09-10T00:24:17+03:00", "finishedAt": "2026-09-10T07:15:00+03:00", "note": "1 из 1 тасков готов" },
+    { "id": "review", "status": "done", "startedAt": "2026-09-10T00:40:00+03:00", "finishedAt": "2026-09-10T07:31:00+03:00", "note": "финальный verdict: ship" },
+    { "id": "final", "status": "done", "startedAt": "2026-09-10T07:20:00+03:00", "finishedAt": "2026-09-10T07:34:47+03:00" }
   ],
-  "requirements": { "total": 32, "done": 0, "inTicket": 31, "inSpec": 0, "placeholder": 1, "deferred": 0, "dropped": 0 },
+  "requirements": { "total": 32, "done": 31, "inTicket": 0, "inSpec": 0, "placeholder": 1, "deferred": 0, "dropped": 0 },
   "tickets": [
     {
       "id": "01",
@@ -32,24 +32,25 @@ window.STATE =
       "blockedBy": [],
       "wave": 1,
       "zone": ["package.json", "src/", "public/", "tests/"],
-      "status": "repair",
+      "status": "done",
       "startedAt": "2026-09-10T00:24:17+03:00",
       "retries": 0,
       "repairs": 1,
       "repairFindings": ["reduced-motion intro, hero media assignment and error fallback"],
       "handoffs": 0,
-      "files": [],
-      "tests": null,
-      "commit": null,
-      "concerns": []
+      "finishedAt": "2026-09-10T07:15:00+03:00",
+      "files": ["src/App.tsx", "src/index.css", "src/data/media.ts", "src/lib/layout.ts", "src/lib/heroState.ts", "public/media/"],
+      "tests": { "passed": 4, "failed": 0 },
+      "commit": "4e281c7",
+      "concerns": ["production audit не выполнен: внешний npm endpoint не разрешён"]
     }
   ],
   "singlePass": null,
-  "tests": null,
-  "debt": { "placeholders": [], "assumptions": [], "emptyEnv": [] },
+  "tests": { "passed": 4, "failed": 0 },
+  "debt": { "placeholders": ["настоящие пользовательские видео не предоставлены; hero использует пользовательские фото"], "assumptions": [], "emptyEnv": [] },
   "additions": [],
   "coverage": { "found": 6, "fixed": 6, "deferred": 0 },
-  "concerns": [],
+  "concerns": ["production npm audit не выполнен из-за ограничения внешнего доступа"],
   "reviewers": { "manifestSpec": null, "craft": null },
-  "blind": null
+  "blind": { "status": "partial", "agreed": 31, "placeholder": 1, "drift": [], "note": "photo-cinema вместо отсутствующих пользовательских video; CTA contrast исправлен и подтверждён 18.22:1" }
 }
