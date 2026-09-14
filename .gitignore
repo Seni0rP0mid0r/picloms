@@ -1,0 +1,3 @@
+dist/
+verification/*.png
+.playwright-mcp/
