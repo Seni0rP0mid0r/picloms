@@ -22,3 +22,5 @@
 .header nav a.header-search:nth-child(2){display:inline-flex}
 @media(max-width:700px){.header{grid-template-columns:44px minmax(48px,1fr) 88px;padding-inline:18px}.header nav .catalog-link,.header .header-right>.header-favorites{display:none}.header .brand{width:58px;height:48px}.header nav{width:44px}.header nav a.header-search:nth-child(2){display:inline-flex}.header .header-right{width:88px}} 
 @media(max-width:700px){.header{grid-template-columns:minmax(0,1fr) 58px minmax(0,1fr);padding-inline:18px}.header nav{width:auto;justify-content:flex-start}.header .header-right{width:auto;justify-content:flex-end}}
+.header nav .catalog-link{display:inline-flex}
+@media(min-width:801px){.home-page .story-position{display:none}}

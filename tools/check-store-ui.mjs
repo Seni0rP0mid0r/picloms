@@ -23,7 +23,7 @@ for(const width of [390,1440]){
  await page.locator('.related-products').scrollIntoViewIfNeeded();await page.screenshot({path:`verification/store-ui/product-${width}.png`});
  await page.locator('.related-card').first().click();assert(await page.locator('#product-title').textContent()!=='Футболка ORBIT',`${width}: related navigation`);
  await page.locator('#product-dialog [data-close-dialog]').click();
- await page.locator('.header-search').click();await page.waitForSelector('.catalog-tools');
+ await page.goto('http://localhost:3000/shop.html?search=1');await page.waitForSelector('.catalog-tools');
  assert(await page.locator('#catalog-search').isVisible(),`${width}: search opens`);
  await page.locator('#catalog-search').fill('ORBIT');assert(await page.locator('.product-card:visible').count()===1,`${width}: search works`);
  await page.reload();await page.waitForSelector('.catalog-tools');assert(await page.locator('#catalog-search').inputValue()==='ORBIT',`${width}: query persists`);
@@ -33,7 +33,7 @@ for(const width of [390,1440]){
  for(const c of await form.locator('[type=checkbox]').all())await c.check();await form.locator('[type=submit]').click();
  assert((await form.locator('[role=status]').textContent()).includes('не сохранён'),`${width}: honest demo submission`);
  for(const route of ['buyers.html','silhouette.html','index.html']){
- await page.goto('http://localhost:3000/'+route);await page.waitForSelector('.header-search');
+ await page.goto('http://localhost:3000/'+route);await page.waitForSelector('.catalog-link');
  assert(await page.locator('.bag-link svg').count()===1,`${width}: ${route} bag icon`);
  if(width<801&&page.url().endsWith('shop.html')){assert(!(await page.locator('.filter-panel').isVisible()),'mobile filters start closed');await page.locator('#filter-toggle').click();assert(await page.locator('.filter-panel').isVisible(),'mobile filters open');await page.locator('#filter-toggle').click();}assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${width}: ${route} no overflow`);
  await page.locator('.menu-toggle').click();assert(await page.locator('.menu-close').evaluate(e=>e===document.activeElement),`${width}: ${route} menu focus`);
@@ -43,5 +43,6 @@ for(const width of [390,1440]){
 }
 assert(!errors.length,'No browser JavaScript errors');
 await writeFile('verification/store-ui/results.json',JSON.stringify({results,errors},null,2));console.log(JSON.stringify({passed:results.length,errors}));await browser.close();
+
 
 

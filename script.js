@@ -17,13 +17,6 @@ if (catalogLink) {
   catalogLink.setAttribute('aria-label', 'Открыть каталог');
   catalogLink.title = 'Каталог';
   catalogLink.innerHTML = navIcons.catalog;
-  const searchLink = document.createElement('a');
-  searchLink.className = 'nav-icon header-search';
-  searchLink.href = 'shop.html?search=1';
-  searchLink.setAttribute('aria-label', 'Поиск товаров');
-  searchLink.title = 'Поиск';
-  searchLink.innerHTML = navIcons.search;
-  catalogLink.after(searchLink);
 }
 const headerRight = header?.querySelector('.header-right');
 if (headerRight) {
@@ -60,6 +53,9 @@ ribbonToggle?.addEventListener('click', () => {
 });
 const menu = document.querySelector('#menu');
 const menuFavorites=document.createElement('a');menuFavorites.href='shop.html?favorites=1';menuFavorites.textContent='Избранное';menuFavorites.className='menu-favorites';menu.querySelector('nav').prepend(menuFavorites);
+const menuNav=menu.querySelector('nav');
+const menuOrder=['index.html','shop.html','silhouette.html','shop.html?favorites=1','buyers.html#sizes'];
+menuNav.replaceChildren(...menuOrder.map(href=>menuNav.querySelector(`a[href="${href}"]`)).filter(Boolean));
 const trigger = document.querySelector('.menu-toggle');
 document.documentElement.classList.add('js');
 let navigationTarget = null;

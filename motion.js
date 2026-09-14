@@ -5,14 +5,6 @@ const photo=rail.querySelector('img');
 const preference=matchMedia('(max-width: 800px) and (prefers-reduced-motion: no-preference)');
 let scheduled=false;
 let offset=0,expected=0,base=0;
-const controls=document.createElement('div');controls.className='carousel-arrows';
-controls.innerHTML='<button type="button" aria-label="Предыдущие образы">←</button><button type="button" aria-label="Следующие образы">→</button>';
-scene.querySelector('.story-position').append(controls);
-controls.querySelectorAll('button').forEach((button,index)=>button.addEventListener('click',()=>{
- const distance=Math.max(0,photo.offsetWidth-rail.clientWidth);
- const target=Math.max(0,Math.min(distance,rail.scrollLeft+(index?1:-1)*rail.clientWidth*.8));
- offset=target-base;expected=target;rail.scrollLeft=target;updateCounter(distance);
-}));
 function updateCounter(distance){
  const progress=distance?rail.scrollLeft/distance:1;
  scene.style.setProperty('--progress',progress);
