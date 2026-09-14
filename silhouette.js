@@ -109,7 +109,18 @@ function renderPreview() {
       const remove=document.createElement('button');remove.type='button';remove.className='remove-piece';remove.textContent='×';remove.setAttribute('aria-label',`Убрать ${selection.product.title}`);
       remove.addEventListener('click',()=>{chosen[group.id]={product:null,size:''};refresh();status.textContent=`${selection.product.title} убран из образа.`;document.querySelector(`[data-outfit-group="${group.id}"]`).focus({preventScroll:true});});slot.append(remove);
       total+=selection.product.price;count++;
-    } else {const label=document.createElement('span');label.textContent=group.optional?'Акцент / по желанию':group.id==='upper'?'Выберите верх':'Выберите низ';slot.append(label);}
+    } else {
+      const choose=document.createElement('button');choose.type='button';choose.className='choose-slot';
+      choose.innerHTML=`<span aria-hidden="true">+</span><strong>${group.id==='upper'?'Выбрать верх':group.id==='lower'?'Выбрать низ':'Добавить акцент'}</strong><small>${group.optional?'По желанию':'Нажмите, чтобы открыть вещи'}</small>`;
+      choose.addEventListener('click',()=>{
+        active=group.id;
+        document.querySelectorAll('[data-outfit-group]').forEach(tab=>tab.setAttribute('aria-pressed',String(tab.dataset.outfitGroup===active)));
+        renderOptions();host.scrollTop=0;
+        const tabs=document.querySelector('.outfit-tabs');tabs.scrollIntoView({behavior:'instant',block:'start'});
+        document.querySelector(`[data-outfit-group="${active}"]`).focus({preventScroll:true});
+        status.textContent=`Выберите ${group.id==='upper'?'верх':group.id==='lower'?'низ':'акцент'} из списка вещей.`;
+      });slot.append(choose);
+    }
     preview.append(slot);
   }
   document.querySelector('#outfit-total').textContent=money(total);
