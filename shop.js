@@ -42,7 +42,7 @@ for (const dialog of [productDialog, bagDialog]) {
   });
   dialog.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
-    const elements = [...dialog.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled)')].filter(el => el.getClientRects().length);
+    const elements = [...dialog.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),select,summary,[tabindex="0"]')].filter(el => el.getClientRects().length);
     const first = elements[0], last = elements.at(-1);
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
@@ -62,8 +62,11 @@ function showProduct(id) {
   const photo = document.querySelector('#product-preview-image');
   photo.src = selectedProduct.image;
   photo.alt = `${selectedProduct.title}, вид спереди`;
-  document.querySelector('.color-line').textContent = `${selectedProduct.color} · ${selectedProduct.material} · ${selectedProduct.fit}`;
-  document.querySelector('[data-photo="detail"]').textContent = 'Детали ближе';
+  document.querySelector('.color-line').textContent = `Цвет / ${selectedProduct.color}`;
+  document.querySelector('#product-article').textContent = `Артикул / PCL.${selectedProduct.id.toUpperCase()}`;
+  document.querySelector('#product-fit').textContent = `${selectedProduct.fit}. Доступные размеры: ${selectedProduct.sizes.join(', ')}.`;
+  document.querySelector('#product-material').textContent = selectedProduct.material;
+  renderGallery(selectedProduct);syncFavorites();
   const sizeOptions = document.querySelector('#size-picker .size-options');
   sizeOptions.replaceChildren(...selectedProduct.sizes.map(size => {
     const label = document.createElement('label');
@@ -73,8 +76,7 @@ function showProduct(id) {
     label.append(input, text);
     return label;
   }));
-  document.querySelector('.product-preview').classList.remove('zoom');
-  document.querySelectorAll('[data-photo]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.photo === 'full')));
+  resetZoom();
   document.querySelectorAll('[name="size"]').forEach(input => { input.checked = false; });
   addButton.disabled = true;
   addButton.textContent = 'Выберите размер';
@@ -92,11 +94,6 @@ document.querySelector('#size-picker').addEventListener('change', () => {
   addButton.textContent = `В корзину · ${money(selectedProduct.price)}`;
   productStatus.textContent = '';
 });
-
-document.querySelectorAll('[data-photo]').forEach(button => button.addEventListener('click', () => {
-  document.querySelector('.product-preview').classList.toggle('zoom', button.dataset.photo === 'detail');
-  document.querySelectorAll('[data-photo]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
-}));
 
 addButton.addEventListener('click', () => {
   const size = document.querySelector('[name="size"]:checked')?.value;
@@ -165,12 +162,14 @@ bagContent.addEventListener('click', event => {
 document.querySelectorAll('.bag-toggle,[data-open-bag]').forEach(button => button.addEventListener('click', () => {renderCart();openDialog(bagDialog);}));
 saveCart();
 document.documentElement.classList.add('shop-ready');
-const featured = ['orbit','feral','veil','patch','noct','clasp'].map(id=>products.find(p=>p.id===id)).filter(Boolean);
+const featured = [...products];
+for(let i=featured.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[featured[i],featured[j]]=[featured[j],featured[i]];}
+try{const previous=sessionStorage.getItem('picloms-last-feature');if(featured.length>1&&featured[0].id===previous)[featured[0],featured[1]]=[featured[1],featured[0]];sessionStorage.setItem('picloms-last-feature',featured[0].id);}catch{}
 let featureIndex=0;
 function changeFeature(step){
   featureIndex=(featureIndex+step+featured.length)%featured.length;
   const p=featured[featureIndex], section=document.querySelector('.product-feature');
-  const photo=section.querySelector('.feature-photo img');photo.src=p.id==='orbit'?'assets/orbit-editorial.png':p.image;photo.alt=p.title;
+  const photo=section.querySelector('.feature-photo img');photo.src=p.image;photo.alt=p.title;
   section.querySelector('.photo-label').textContent=p.name;
   section.querySelector('h2').textContent=p.name;
   section.querySelector('.feature-subtitle').textContent=p.title;
@@ -182,12 +181,54 @@ function changeFeature(step){
 }
 document.querySelector('#feature-prev').addEventListener('click',()=>changeFeature(-1));
 document.querySelector('#feature-next').addEventListener('click',()=>changeFeature(1));
+changeFeature(0);
+const favoriteKey='picloms-favorites-v1';
+let favorites=new Set();
+try{const saved=JSON.parse(localStorage.getItem(favoriteKey)||'[]');if(Array.isArray(saved))favorites=new Set(saved.filter(id=>products.some(p=>p.id===id)));}catch{}
+function syncFavorites(){
+ document.querySelectorAll('[data-favorite]').forEach(button=>{const yes=favorites.has(button.dataset.favorite);button.setAttribute('aria-pressed',String(yes));button.textContent=yes?'♥':'♡';button.setAttribute('aria-label',`${yes?'Убрать из избранного':'В избранное'}: ${products.find(p=>p.id===button.dataset.favorite)?.title}`);});
+ const button=document.querySelector('#product-favorite'),yes=favorites.has(selectedProduct?.id);button.textContent=yes?'♥':'♡';button.setAttribute('aria-pressed',String(yes));button.setAttribute('aria-label',yes?'Убрать из избранного':'Добавить в избранное');
+}
+function toggleFavorite(id){if(favorites.has(id))favorites.delete(id);else favorites.add(id);try{localStorage.setItem(favoriteKey,JSON.stringify([...favorites]));}catch{}syncFavorites();filterCollection(currentCategory);}
+document.querySelector('#product-favorite').addEventListener('click',()=>{if(selectedProduct)toggleFavorite(selectedProduct.id);});
+const zoomArea=document.querySelector('.product-preview'),zoomImage=document.querySelector('#product-preview-image'),zoomInput=document.querySelector('#photo-zoom');
+let zoom=1,panX=0,panY=0,touchStart=null,hovering=false;
+function applyZoom(){const maxX=zoomArea.clientWidth*(zoom-1)/2,maxY=zoomArea.clientHeight*(zoom-1)/2;panX=Math.max(-maxX,Math.min(maxX,panX));panY=Math.max(-maxY,Math.min(maxY,panY));zoomImage.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;zoomInput.value=zoom;document.querySelector('#zoom-value').textContent=`${Math.round(zoom*100)}%`;}
+function resetZoom(){zoom=1;panX=panY=0;hovering=false;applyZoom();}
+zoomInput.addEventListener('input',()=>{hovering=false;zoom=Number(zoomInput.value);applyZoom();});
+document.querySelector('#reset-photo').addEventListener('click',resetZoom);
+zoomArea.addEventListener('pointermove',event=>{if(event.pointerType!=='mouse'||!matchMedia('(hover:hover)').matches)return;if(zoom===1){zoom=2;hovering=true;}const r=zoomArea.getBoundingClientRect();panX=(.5-(event.clientX-r.left)/r.width)*r.width*(zoom-1);panY=(.5-(event.clientY-r.top)/r.height)*r.height*(zoom-1);applyZoom();});
+zoomArea.addEventListener('pointerleave',()=>{if(hovering)resetZoom();});
+const touchDistance=touches=>Math.hypot(touches[0].clientX-touches[1].clientX,touches[0].clientY-touches[1].clientY);
+zoomArea.addEventListener('touchstart',event=>{hovering=false;touchStart=event.touches.length===2?{distance:touchDistance(event.touches),zoom}:event.touches.length===1?{x:event.touches[0].clientX,y:event.touches[0].clientY,panX,panY}:null;},{passive:true});
+zoomArea.addEventListener('touchmove',event=>{if(!touchStart)return;if(event.touches.length===2&&touchStart.distance){event.preventDefault();zoom=Math.max(1,Math.min(3,touchStart.zoom*touchDistance(event.touches)/touchStart.distance));applyZoom();}else if(event.touches.length===1&&zoom>1&&touchStart.x!==undefined){event.preventDefault();panX=touchStart.panX+event.touches[0].clientX-touchStart.x;panY=touchStart.panY+event.touches[0].clientY-touchStart.y;applyZoom();}},{passive:false});
+zoomArea.addEventListener('touchend',()=>{touchStart=null;});
+zoomArea.addEventListener('keydown',event=>{if(['+','=','-','0','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();if(event.key==='0')resetZoom();else if(event.key==='+'||event.key==='=')zoom=Math.min(3,zoom+.2);else if(event.key==='-')zoom=Math.max(1,zoom-.2);else{panX+=event.key==='ArrowLeft'?30:event.key==='ArrowRight'?-30:0;panY+=event.key==='ArrowUp'?30:event.key==='ArrowDown'?-30:0;}applyZoom();}});
+function renderGallery(product){const photos=[{src:product.image,label:'Изделие'}];if(product.id==='orbit')photos.push({src:'assets/orbit-editorial.png',label:'На модели'});const thumbs=document.querySelector('.gallery-thumbs');thumbs.replaceChildren();photos.forEach((photo,index)=>{const button=document.createElement('button');button.type='button';button.setAttribute('aria-label',photo.label);button.setAttribute('aria-pressed',String(index===0));const image=document.createElement('img');image.src=photo.src;image.alt='';button.append(image);button.addEventListener('click',()=>{zoomImage.src=photo.src;zoomImage.alt=`${product.title}: ${photo.label}`;resetZoom();thumbs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));});thumbs.append(button);});}
 const route = new URLSearchParams(location.search);
 const filters = [...document.querySelectorAll('[data-filter]')];
 const cards = [...document.querySelectorAll('.product-card[data-category]')];
+let currentCategory='all';
+const controls=document.createElement('div');controls.className='catalog-tools';
+controls.innerHTML='<label class="catalog-search">Поиск<input id="catalog-search" type="search" placeholder="Название или материал" autocomplete="off"></label><label>Цена до, ₽<input id="catalog-price" type="number" min="0" step="100" inputmode="numeric" placeholder="Любая"></label><label>Размер<select id="catalog-size"><option value="">Все размеры</option></select></label><label>Порядок<select id="catalog-sort"><option value="default">Коллекция</option><option value="price-up">Сначала дешевле</option><option value="price-down">Сначала дороже</option><option value="name">По названию</option></select></label><button id="favorites-only" type="button" aria-pressed="false">♡ Избранное</button><button id="reset-filters" type="button">Сбросить</button>';
+document.querySelector('.product-grid').before(controls);
+const empty=document.createElement('p');empty.className='catalog-empty';empty.hidden=true;empty.textContent='Ничего не найдено. Измените фильтры или добавьте вещи в избранное.';document.querySelector('.product-grid').after(empty);
+const search=document.querySelector('#catalog-search'),priceLimit=document.querySelector('#catalog-price'),sizeFilter=document.querySelector('#catalog-size'),sort=document.querySelector('#catalog-sort'),favoritesOnly=document.querySelector('#favorites-only');
+[...new Set(products.flatMap(p=>p.sizes))].forEach(size=>sizeFilter.append(new Option(size,size)));
+cards.forEach(card=>{const id=card.querySelector('[data-product]')?.dataset.product;card.dataset.id=id;const button=document.createElement('button');button.type='button';button.className='favorite-heart';button.dataset.favorite=id;button.addEventListener('click',()=>toggleFavorite(id));card.append(button);});
+syncFavorites();
+for(const input of [search,priceLimit,sizeFilter,sort])input.addEventListener('input',()=>filterCollection(currentCategory));
+favoritesOnly.addEventListener('click',()=>{favoritesOnly.setAttribute('aria-pressed',String(favoritesOnly.getAttribute('aria-pressed')!=='true'));filterCollection(currentCategory,true);});
+document.querySelector('#reset-filters').addEventListener('click',()=>{search.value=priceLimit.value=sizeFilter.value='';sort.value='default';favoritesOnly.setAttribute('aria-pressed','false');filterCollection('all',true);});
+const reveal=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('image-revealed');reveal.unobserve(entry.target);}}),{rootMargin:'100px'});
+cards.forEach(card=>{const img=card.querySelector('img');img.loading='lazy';img.decoding='async';if(!matchMedia('(prefers-reduced-motion: reduce)').matches){card.classList.add('image-reveal');reveal.observe(card);}});
 function filterCollection(category, updateAddress = false) {
   if (!['all', 'graphic', 'top', 'bottom', 'accessories'].includes(category)) category = 'all';
-  cards.forEach(card => { card.hidden = category !== 'all' && card.dataset.category !== category; });
+  currentCategory=category;
+  const term=search.value.trim().toLocaleLowerCase('ru'),maximum=priceLimit.value===''?Infinity:Math.max(0,Number(priceLimit.value)),only=favoritesOnly.getAttribute('aria-pressed')==='true';
+  cards.forEach(card=>{const p=products.find(p=>p.id===card.dataset.id);card.hidden=(category!=='all'&&p.category!==category)||!`${p.title} ${p.description} ${p.material}`.toLocaleLowerCase('ru').includes(term)||p.price>maximum||(sizeFilter.value&&!p.sizes.includes(sizeFilter.value))||(only&&!favorites.has(p.id));});
+  const ordered=[...cards];if(sort.value!=='default')ordered.sort((a,b)=>{const x=products.find(p=>p.id===a.dataset.id),y=products.find(p=>p.id===b.dataset.id);return sort.value==='price-up'?x.price-y.price:sort.value==='price-down'?y.price-x.price:x.title.localeCompare(y.title,'ru');});
+  document.querySelector('.product-grid').append(...ordered);empty.hidden=cards.some(card=>!card.hidden);
   filters.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === category)));
   const status = document.querySelector('#filter-status');
   if (status) status.textContent = `Изделий: ${cards.filter(card => !card.hidden).length}`;
@@ -195,10 +236,12 @@ function filterCollection(category, updateAddress = false) {
     const address = new URL(location.href);
     if (category === 'all') address.searchParams.delete('category');
     else address.searchParams.set('category', category);
+    if(only)address.searchParams.set('favorites','1');else address.searchParams.delete('favorites');
     history.replaceState(null, '', address);
   }
 }
 filters.forEach(button => button.addEventListener('click', () => filterCollection(button.dataset.filter, true)));
+if(route.get('favorites')==='1')favoritesOnly.setAttribute('aria-pressed','true');
 filterCollection(route.get('category') || 'all');
 if (route.get('view') === 'bag') { renderCart(); openDialog(bagDialog); bagDialog.returnFocus = document.querySelector('.bag-toggle'); }
 else if (products.some(p => p.id === route.get('product'))) {

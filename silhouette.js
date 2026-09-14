@@ -116,7 +116,7 @@ function renderPreview() {
         active=group.id;
         document.querySelectorAll('[data-outfit-group]').forEach(tab=>tab.setAttribute('aria-pressed',String(tab.dataset.outfitGroup===active)));
         renderOptions();host.scrollTop=0;
-        const tabs=document.querySelector('.outfit-tabs');tabs.scrollIntoView({behavior:'instant',block:'start'});
+        const tabs=document.querySelector('.outfit-tabs');tabs.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
         document.querySelector(`[data-outfit-group="${active}"]`).focus({preventScroll:true});
         status.textContent=`Выберите ${group.id==='upper'?'верх':group.id==='lower'?'низ':'акцент'} из списка вещей.`;
       });slot.append(choose);
@@ -167,3 +167,4 @@ form.addEventListener('submit',event=>{
   catch{status.textContent='Браузер запретил сохранение корзины. Разрешите хранение данных сайта и повторите.';}
 });
 renderOptions();renderPreview();
+
